@@ -47,13 +47,13 @@ struct Connection *Database_open(const char *filename, char mode){
     struct Connection *conn = malloc(sizeof(struct Connection));
     if(!conn) die("Memory error!");
 
-    conn->db = malloc(sizeof(struct Connection));
+    conn->db = malloc(sizeof(struct Database));
     if(!conn->db) die("Memory error!");
 
     if(mode == 'c'){
-        conn->file = fopen(filename, 'w');
+        conn->file = fopen(filename, "w");
     } else {
-        conn->file = fopen(filename, 'r+');
+        conn->file = fopen(filename, "r+");
 
         if(conn->file){
             Database_load(conn);
@@ -68,7 +68,7 @@ struct Connection *Database_open(const char *filename, char mode){
 void Database_close(struct Connection *conn){
     if(conn){
         if(conn->file) fclose(conn->file);
-        if(conn->db) fclose(conn->db);
+        if(conn->db) free(conn->db);
         free(conn);
     }
 }
@@ -76,7 +76,7 @@ void Database_close(struct Connection *conn){
 void Database_write(struct Connection *conn){
     rewind(conn->file);
 
-    int rc = fwrite(conn-db, sizeof(struct Database), 1, conn->file);
+    int rc = fwrite(conn->db, sizeof(struct Database), 1, conn->file);
     if(rc != 1) die("Failed to write to database.");
 
     rc = fflush(conn->file);
@@ -109,7 +109,7 @@ void Database_set(struct Connection *conn, int id, const char *name, const char 
 }
 
 void Database_get(struct Connection *conn, int id){
-    struct Address *addr = *conn->db->rows[id];
+    struct Address *addr = &conn->db->rows[id];
 
     if(addr->set){
         Address_print(addr);
@@ -125,7 +125,7 @@ void Database_delete(struct Connection *conn, int id){
 
 void Database_list(struct Connection *conn){
     int i = 0;
-    struct Database *db = conn-db;
+    struct Database *db = conn->db;
 
     for(i = 0; i < MAX_ROWS; i++){
         struct Address *cur = &db->rows[i];
